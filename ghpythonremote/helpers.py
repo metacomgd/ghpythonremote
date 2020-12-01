@@ -2,11 +2,16 @@ import json
 import logging
 import os
 import subprocess
+import platform
 
 logger = logging.getLogger("ghpythonremote.helpers")
 
 
 def get_python_path(location=None):
+    if platform.system() == 'Darwin':
+        return '/usr/bin/python'
+        #return '/System/Library/Frameworks/Python.framework/Versions/2.7/bin/python2.7'
+
     if location is None or location == "":
         return get_python_from_windows_path()
 
@@ -141,7 +146,27 @@ DEFAULT_RHINO_VERSION = 6
 
 def get_ironpython_from_appdata(rhino_version=DEFAULT_RHINO_VERSION):
     appdata_path = os.getenv("APPDATA", "")
-    if rhino_version == 6:
+    if platform.system() == 'Darwin':
+        appdata_path = os.path.expanduser('~/Library/Application Support')
+    if rhino_version == 7:
+        ironpython_settings_path = os.path.join(
+            appdata_path,
+            "McNeel",
+            "Rhinoceros",
+            "7.0",
+            "Plug-ins",
+            "IronPython (814d908a-e25c-493d-97e9-ee3861957f49)",
+            "settings",
+        )
+        if platform.system() == 'Darwin':
+            ironpython_settings_path = os.path.join(
+            appdata_path,
+            "McNeel",
+            "Rhinoceros",
+            "7.0",
+            "scripts"
+        )
+    elif rhino_version == 6:
         ironpython_settings_path = os.path.join(
             appdata_path,
             "McNeel",
@@ -225,8 +250,27 @@ def get_ironpython_from_appdata(rhino_version=DEFAULT_RHINO_VERSION):
                 + " " * 9
                 + "Was Grasshopper for Rhino 6 opened at least once on this machine?\n"
             )
+    if rhino_version == 7:
+         # Rhino 7 seems to not have the __init__.py file, but the folder is created
+        ghpythonlib_folder_path = os.path.join(
+            ironpython_settings_path, "lib", "ghpythonlib"
+        )
+        if platform.system() == "Darwin":
+            ghpythonlib_folder_path=ironpython_settings_path
+        
+        if not os.path.isdir(ghpythonlib_folder_path):
+            logger.warning(
+                " No ghpythonlib package found in {!s}.\n".format(
+                    os.path.join(ironpython_settings_path, "lib")
+                )
+                + " " * 9
+                + "Was Grasshopper for Rhino 7 opened at least once on this machine?\n"
+            )
+
 
     ironpython_lib_path = os.path.join(ironpython_settings_path, "lib")
+    if platform.system() == "Darwin":
+            ironpython_lib_path = ironpython_settings_path
     if not os.path.isdir(ironpython_lib_path):
         logger.error(
             " IronPython lib directory for Rhinoceros not found in {!s}.\n".format(
@@ -246,6 +290,36 @@ def get_ironpython_from_appdata(rhino_version=DEFAULT_RHINO_VERSION):
 
     return ironpython_lib_path
 
+
+def get_plugins_from_appdata(rhino_version=DEFAULT_RHINO_VERSION):
+    appdata_path = os.getenv("APPDATA", "")
+    if platform.system() == 'Darwin':
+        appdata_path = os.path.expanduser('~/Library/Application Support')
+    if rhino_version == 7:
+        plugins_path = os.path.join(
+            appdata_path,
+            "McNeel",
+            "Rhinoceros",
+            "7.0",
+            "Plug-ins"
+        )
+    elif rhino_version == 6:
+        plugins_path = os.path.join(
+            appdata_path,
+            "McNeel",
+            "Rhinoceros",
+            "6.0",
+            "Plug-ins"
+        )
+    elif rhino_version == 5:
+        pluginss_path = os.path.join(
+            appdata_path,
+            "McNeel",
+            "Rhinoceros",
+            "5.0",
+            "Plug-ins"
+        )
+    return plugins_path
 
 def get_ironpython_from_path(location):
     return location

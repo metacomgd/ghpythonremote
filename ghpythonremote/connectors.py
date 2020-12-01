@@ -4,12 +4,13 @@ import os
 import platform
 import socket
 import subprocess
+import platform
 from time import sleep
-
-try:
-    import _winreg as winreg
-except ImportError:
-    import winreg
+if platform.system() != 'Darwin':
+    try:
+        import _winreg as winreg
+    except ImportError:
+        import winreg
 
 from ghpythonremote import rpyc
 from .helpers import get_python_path, get_extended_env_path_conda
@@ -119,13 +120,15 @@ class GrasshopperToPythonRemote:
         python_call = '"{!s}" "{!s}" "{}" "{!s}"'.format(
             self.python_exe, self.rpyc_server_py, self.port, self.log_level
         )
+        if platform.system() == 'Darwin':
+            python_call= [self.python_exe, self.rpyc_server_py, str(self.port), self.log_level]
         cwd = self.working_dir
         python_popen = subprocess.Popen(
             python_call,
             stdout=subprocess.PIPE,
             stdin=subprocess.PIPE,
             cwd=cwd,
-            env=self.env,
+            env=self.env
         )
         return python_popen
 
@@ -327,6 +330,8 @@ class PythonToGrasshopperRemote:
 
     @staticmethod
     def _get_rhino_path(version=6, preferred_bitness="same"):
+        if platform.system() == 'Darwin':
+            return '/Applications/Rhino 7.app/'
         rhino_reg_key_path = None
         version_str = "{!s}.0".format(version)
         if platform.architecture()[0] == "64bit":

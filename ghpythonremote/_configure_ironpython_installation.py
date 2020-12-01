@@ -3,8 +3,9 @@ import os
 from shutil import copy, rmtree
 import subprocess
 import sys
+import platform
 
-from .helpers import get_rhino_ironpython_path
+from .helpers import get_rhino_ironpython_path, get_plugins_from_appdata
 
 logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
 
@@ -43,6 +44,11 @@ if __name__ == "__main__":
     gh_userobjects_path = os.path.join(
         os.getenv("APPDATA", ""), "Grasshopper", "UserObjects"
     )
+    if platform.system() == 'Darwin':
+        plugins_path = get_plugins_from_appdata(location)
+        gh_userobjects_path = os.path.join(
+            plugins_path, 'Grasshopper (b45a29b1-4343-4035-989e-044e8580d9cf)', 'UserObjects'
+            )
     if os.path.isdir(gh_userobjects_path):
         dest_dir_path = os.path.join(gh_userobjects_path, package_name)
     else:
